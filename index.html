@@ -301,9 +301,7 @@
     Continuar →
   </button>
 
-  <button class="btn btn-ghost" onclick="showDebugModal()" style="position:relative; z-index:50;">
-  ⚙ Configurar Google Sheets
-</button>
+  <button class="btn btn-ghost" onclick="showDebugModal()">⚙ Configurar Google Sheets</button>
 </div>
 
 <!-- ═══════════════════════════════ PRODUCTS SCREEN ═══════════════════════════════ -->
@@ -420,10 +418,8 @@ let qrStream = null;
 let qrInterval = null;
 
 // ═══════════════════ CONFIG ═══════════════════
-const DEFAULT_SCRIPT_URL = 'https://script.google.com/a/macros/somosfeed.com.ar/s/AKfycbzvf5OZBO7Ukqavi8aBeVJry-IZutyJnYd4gklShe24BOa_pg4mxdbSAs3UKwldD-dW/exec';
-
 function getScriptUrl() {
-  return localStorage.getItem('scriptUrl') || DEFAULT_SCRIPT_URL;
+  return localStorage.getItem('scriptUrl') || '';
 }
 function saveConfig() {
   const url = document.getElementById('scriptUrl').value.trim();
