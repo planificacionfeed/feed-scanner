@@ -301,9 +301,17 @@
     Continuar →
   </button>
 
-  <button class="btn btn-ghost" onclick="configureScriptUrl()" style="position:relative; z-index:50;">
-  ⚙ Configurar Google Sheets
-</button>
+  <div style="width:100%; max-width:340px; margin-top:8px;">
+  <input
+    type="url"
+    id="scriptUrl"
+    placeholder="Pegá acá la URL de Apps Script (/exec)"
+    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-size:0.85rem;outline:none;margin-bottom:8px"
+  >
+  <button class="btn btn-secondary" style="width:100%" onclick="saveConfig()">
+    Guardar URL de Google Sheets
+  </button>
+</div>
 </div>
 
 <!-- ═══════════════════════════════ PRODUCTS SCREEN ═══════════════════════════════ -->
@@ -430,19 +438,7 @@ function saveConfig() {
   closeConfig();
   showToast('URL guardada ✓', true);
 }
-function configureScriptUrl() {
-  const current = getScriptUrl();
-  const url = prompt('Pegá la URL de tu Apps Script (/exec):', current || '');
-  if (url === null) return;
-  const cleanUrl = url.trim();
-  if (!cleanUrl) {
-    showToast('Ingresá una URL válida');
-    return;
-  }
-  localStorage.setItem('scriptUrl', cleanUrl);
-  showToast('URL guardada ✓', true);
-}
-
+function showDebugModal() {}
 function closeConfig() {}
 
 // ═══════════════════ NFC ═══════════════════
