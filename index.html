@@ -223,6 +223,7 @@ document.getElementById('manualId').addEventListener('input', function(event) {
 
 function enterManual() {
   const val = document.getElementById('manualId').value.trim();
+  console.log('Valor ingresado:', val);  // Verifica si el valor se obtiene correctamente
   if (!val) { showToast('Ingresá un código de tarjeta'); return; }
   openProducts(val);
 }
