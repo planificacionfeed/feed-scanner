@@ -1,3 +1,5 @@
+<!-- listado de productos en linea 410 y -->
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -301,17 +303,6 @@
     Continuar →
   </button>
 
-  <div style="width:100%; max-width:340px; margin-top:8px;">
-  <input
-    type="url"
-    id="scriptUrl"
-    placeholder="Pegá acá la URL de Apps Script (/exec)"
-    style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-size:0.85rem;outline:none;margin-bottom:8px"
-  >
-  <button class="btn btn-secondary" style="width:100%" onclick="saveConfig()">
-    Guardar URL de Google Sheets
-  </button>
-</div>
 </div>
 
 <!-- ═══════════════════════════════ PRODUCTS SCREEN ═══════════════════════════════ -->
@@ -373,24 +364,23 @@
   </button>
 </div>
 
-<!-- ═══════════════════════════════ CONFIG MODAL ═══════════════════════════════ -->
-<div id="configModal" style="display:none;position:fixed;inset:0;background:rgba(10,11,15,.85);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)">
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:500px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <h3 style="font-family:'Syne',sans-serif;font-weight:700">Configuración</h3>
-      <span style="cursor:pointer;color:var(--muted);font-size:1.3rem" onclick="closeConfig()">×</span>
+<!-- ═══════════════════════════════ BLOCKED SCREEN ═══════════════════════════════ -->
+<div id="blockedScreen" class="screen" style="align-items:center;justify-content:center;gap:24px;padding:32px 24px;background:radial-gradient(ellipse at 50% 40%, rgba(248,113,113,.07) 0%, var(--bg) 70%)">
+  <div style="width:88px;height:88px;border-radius:50%;background:rgba(248,113,113,.12);border:2px solid var(--danger);display:flex;align-items:center;justify-content:center;font-size:2.5rem">🚫</div>
+  <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;text-align:center;color:var(--danger)">Compra no permitida</div>
+  <div style="color:var(--muted);text-align:center;font-size:0.85rem;line-height:1.6;max-width:300px">
+    Esta tarjeta ya registró una compra el día de hoy.<br>Solo se permite una transacción por tarjeta por día.
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:360px;overflow:hidden">
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;color:var(--muted)">
+      TARJETA: <span id="blockedCardId" style="color:var(--text)"></span>
     </div>
-    <p style="font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.5">
-      Pegá la URL de tu Google Apps Script Web App para guardar datos en Google Sheets.
-    </p>
-    <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/..." 
-      style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);font-size:0.85rem;outline:none;margin-bottom:12px">
-    <button class="btn btn-primary" style="width:100%" onclick="saveConfig()">Guardar URL</button>
-    <div style="margin-top:16px;padding:12px;background:var(--surface2);border-radius:10px;font-size:0.75rem;color:var(--muted);line-height:1.6">
-      <strong style="color:var(--text)">¿Dónde obtengo la URL?</strong><br>
-      Abrí Google Sheets → Extensions → Apps Script → pegá el código del archivo <code>apps-script.gs</code> → Implementar → Nueva implementación → Web App → Ejecutar como: Yo → Acceso: Cualquier persona → Implementar.
+    <div style="padding:6px 0;font-size:0.82rem">
+      <div style="padding:8px 16px;color:var(--muted);font-size:0.75rem;font-weight:600;font-family:'Syne',sans-serif">COMPRAS DE HOY</div>
+      <div id="blockedPurchaseList"></div>
     </div>
   </div>
+  <button class="btn btn-secondary" style="width:100%;max-width:360px" onclick="resetAll()">← Escanear otra tarjeta</button>
 </div>
 
 <!-- ═══════════════════════════════ QR MODAL ═══════════════════════════════ -->
@@ -428,18 +418,7 @@ let qrStream = null;
 let qrInterval = null;
 
 // ═══════════════════ CONFIG ═══════════════════
-function getScriptUrl() {
-  return localStorage.getItem('scriptUrl') || '';
-}
-function saveConfig() {
-  const url = document.getElementById('scriptUrl').value.trim();
-  if (!url) { showToast('Ingresá una URL válida'); return; }
-  localStorage.setItem('scriptUrl', url);
-  closeConfig();
-  showToast('URL guardada ✓', true);
-}
-function showDebugModal() {}
-function closeConfig() {}
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwNfOyVcjtERG4xg7tGX4DSaKInMXQ2tePJn49uxVGLcF1WlexrWMR4HC6Fpn3m7t31/exec';
 
 // ═══════════════════ NFC ═══════════════════
 async function startNFC() {
@@ -551,15 +530,50 @@ function getEmoji(name) {
   return '🍽️';
 }
 
-function openProducts(cardId) {
+async function openProducts(cardId) {
   currentCardId = cardId;
   scanTimestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
   cart = {};
+
+  // Verificar si ya compró hoy
+  showLoading(true, 'Verificando tarjeta...');
+  try {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const url = `${SCRIPT_URL}?action=check&id_tarjeta=${encodeURIComponent(cardId)}&fecha=${today}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    showLoading(false);
+    if (data.yaCompro) {
+      showBlockedScreen(cardId, data.compras || []);
+      return;
+    }
+  } catch(e) {
+    showLoading(false);
+    // Si falla la consulta, dejamos pasar con aviso
+    showToast('No se pudo verificar historial. Continuando...');
+  }
+
   document.getElementById('displayCardId').textContent = 'ID: ' + cardId;
   document.getElementById('cartCardId').textContent = 'ID: ' + cardId;
   renderProducts(PRODUCTS);
   document.getElementById('searchInput').value = '';
   showScreen('productsScreen');
+}
+
+function showBlockedScreen(cardId, compras) {
+  const el = document.getElementById('blockedCardId');
+  if (el) el.textContent = cardId;
+  const list = document.getElementById('blockedPurchaseList');
+  if (list) {
+    if (compras.length > 0) {
+      list.innerHTML = compras.map(c =>
+        `<div class="success-item"><span class="sname">${c.nombre_producto}</span><span class="sqty">×${c.cantidad}</span></div>`
+      ).join('');
+    } else {
+      list.innerHTML = '<div style="padding:12px 16px;color:var(--muted);font-size:0.82rem">No se pudo recuperar el detalle.</div>';
+    }
+  }
+  showScreen('blockedScreen');
 }
 
 function renderProducts(list) {
@@ -695,13 +709,6 @@ function goToProducts() {
 
 // ═══════════════════ SUBMIT ═══════════════════
 async function submitOrder() {
-  const scriptUrl = getScriptUrl();
-  if (!scriptUrl) {
-    showToast('Configurá la URL de Google Sheets primero');
-    showDebugModal();
-    return;
-  }
-
   showLoading(true);
 
   const rows = Object.entries(cart).map(([pid, qty]) => {
@@ -716,11 +723,11 @@ async function submitOrder() {
   });
 
   try {
-    await fetch(scriptUrl, {
+    await fetch(SCRIPT_URL, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rows })
+      body: JSON.stringify({ action: 'insert', rows })
     });
     showLoading(false);
     showSuccess(rows);
@@ -776,12 +783,6 @@ function showToast(msg, success = false) {
 // Enter key on manual input
 document.getElementById('manualId').addEventListener('keydown', e => {
   if (e.key === 'Enter') enterManual();
-});
-
-// Load saved URL
-window.addEventListener('load', () => {
-  const saved = getScriptUrl();
-  if (saved) document.getElementById('scriptUrl').value = saved;
 });
 </script>
 </body>
