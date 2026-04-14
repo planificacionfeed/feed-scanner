@@ -733,6 +733,10 @@ async function submitOrder() {
 
     const data = await resp.json();
 
+    if (data.status === 'blocked') {
+    throw new Error(data.message || 'Esta tarjeta ya compró hoy');
+    }
+
     if (!resp.ok) {
       throw new Error(`HTTP ${resp.status}`);
     }
