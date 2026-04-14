@@ -212,29 +212,20 @@
 </div>
 
 <script>
-// FUNCIONES DE MANUAL / RFID
-document.getElementById('manualId').addEventListener('input', function(event) {
-  const cardId = event.target.value.trim();
-  if (cardId) {
-    openProducts(cardId);
-    event.target.value = ''; // Limpiar el campo después de usarlo
-  }
-});
-
+// Función para ingresar manualmente el código de la tarjeta
 function enterManual() {
   const val = document.getElementById('manualId').value.trim();
-  console.log('Valor ingresado:', val);  // Verifica si el valor se obtiene correctamente
   if (!val) { showToast('Ingresá un código de tarjeta'); return; }
   openProducts(val);
 }
 
-// FUNCIONES DE PRODUCTOS Y CARRITO
+// Función para verificar la compra y abrir productos
 function openProducts(cardId) {
   currentCardId = cardId;
   scanTimestamp = new Date().toISOString().replace('T', ' ').slice(0, 19);
   cart = {};
 
-  // Verificación de compra previa
+  // Verificar si ya compró hoy
   showLoading(true, 'Verificando tarjeta...');
   const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
   const url = `${SCRIPT_URL}?action=check&id_tarjeta=${encodeURIComponent(cardId)}&fecha=${today}`;
@@ -255,211 +246,6 @@ function openProducts(cardId) {
       showLoading(false);
       showToast('No se pudo verificar historial. Continuando...');
     });
-}
-
-function renderProducts(list) {
-  const container = document.getElementById('productsList');
-  container.innerHTML = '';
-  list.forEach(p => {
-    const qty = cart[p.id] || 0;
-    const inCart = qty > 0;
-    const div = document.createElement('div');
-    div.className = 'product-item' + (inCart ? ' in-cart' : '');
-    div.id = 'prod-' + CSS.escape(String(p.id));
-    div.innerHTML = `
-      <div class="product-icon">${getEmoji(p.name)}</div>
-      <div class="product-info">
-        <div class="pid">${p.id}</div>
-        <div class="pname">${p.name}</div>
-      </div>
-      ${inCart ? `
-      <div class="product-qty">
-        <button class="qty-btn" onclick="changeQty('${String(p.id).replace(/'/g,"\\'")}',event,-1)">−</button>
-        <span class="qty-val">${qty}</span>
-        <button class="qty-btn" onclick="changeQty('${String(p.id).replace(/'/g,"\\'")}',event,1)">+</button>
-      </div>` : `
-      <button class="btn btn-secondary btn-sm" onclick="addToCart('${String(p.id).replace(/'/g,"\\'")}',event)">+ Agregar</button>`}
-      <div class="check-mark">✓</div>
-    `;
-    container.appendChild(div);
-  });
-  updateCartUI();
-}
-
-function addToCart(productId, e) {
-  if (e) e.stopPropagation();
-  cart[productId] = 1;
-  const list = document.getElementById('searchInput').value
-    ? PRODUCTS.filter(p => matchSearch(p, document.getElementById('searchInput').value))
-    : PRODUCTS;
-  renderProducts(list);
-  updateCartUI();
-}
-
-function changeQty(productId, e, delta) {
-  if (e) e.stopPropagation();
-  const newQty = (cart[productId] || 0) + delta;
-  if (newQty <= 0) {
-    delete cart[productId];
-  } else {
-    cart[productId] = newQty;
-  }
-  const list = document.getElementById('searchInput').value
-    ? PRODUCTS.filter(p => matchSearch(p, document.getElementById('searchInput').value))
-    : PRODUCTS;
-  renderProducts(list);
-  updateCartUI();
-}
-
-function matchSearch(p, q) {
-  const lq = q.toLowerCase();
-  return String(p.id).toLowerCase().includes(lq) || p.name.toLowerCase().includes(lq);
-}
-
-function updateCartUI() {
-  const count = Object.values(cart).reduce((a, b) => a + b, 0);
-  document.getElementById('cartCount').textContent = count;
-  document.getElementById('floatCount').textContent = Object.keys(cart).length;
-  const btn = document.getElementById('confirmFloatBtn');
-  btn.style.display = count > 0 ? 'flex' : 'none';
-}
-
-// FUNCIONES DE CARRITO
-function goToCart() {
-  if (Object.keys(cart).length === 0) { showToast('Agregá al menos un producto'); return; }
-  renderCart();
-  showScreen('cartScreen');
-}
-
-function renderCart() {
-  const container = document.getElementById('cartList');
-  const items = Object.entries(cart);
-  if (items.length === 0) {
-    container.innerHTML = '<div class="empty-cart"><div class="emoji">🛒</div><p>El carrito está vacío</p></div>';
-    return;
-  }
-  container.innerHTML = '';
-  items.forEach(([pid, qty]) => {
-    const prod = PRODUCTS.find(p => String(p.id) === String(pid)) || { id: pid, name: pid };
-    const div = document.createElement('div');
-    div.className = 'cart-item';
-    div.innerHTML = `
-      <div class="product-icon" style="flex-shrink:0">${getEmoji(prod.name)}</div>
-      <div class="cart-item-info">
-        <div class="cid">${prod.id}</div>
-        <div class="cname">${prod.name}</div>
-        <div class="cart-item-qty">
-          <button class="qty-btn" onclick="cartChangeQty('${String(pid).replace(/'/g,"\\'")}', -1)">−</button>
-          <span class="qty-val">${qty}</span>
-          <button class="qty-btn" onclick="cartChangeQty('${String(pid).replace(/'/g,"\\'")}', 1)">+</button>
-        </div>
-      </div>
-      <span class="cart-remove" onclick="removeFromCart('${String(pid).replace(/'/g,"\\'")}')">🗑</span>
-    `;
-    container.appendChild(div);
-  });
-}
-
-function cartChangeQty(pid, delta) {
-  const newQty = (cart[pid] || 0) + delta;
-  if (newQty <= 0) { delete cart[pid]; }
-  else { cart[pid] = newQty; }
-  renderCart();
-  updateCartUI();
-  if (Object.keys(cart).length === 0) goToProducts();
-}
-function removeFromCart(pid) {
-  delete cart[pid];
-  renderCart();
-  updateCartUI();
-  if (Object.keys(cart).length === 0) goToProducts();
-}
-
-// FUNCIONES DE ENVIO Y REGISTRO
-async function submitOrder() {
-  showLoading(true);
-
-  const rows = Object.entries(cart).map(([pid, qty]) => {
-    const prod = PRODUCTS.find(p => String(p.id) === String(pid)) || { id: pid, name: pid };
-    return {
-      id_tarjeta: currentCardId,
-      id_producto: prod.id,
-      nombre_producto: prod.name,
-      cantidad: qty,
-      fecha_hora: scanTimestamp
-    };
-  });
-
-  try {
-    const resp = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=utf-8'
-      },
-      body: JSON.stringify({ action: 'insert', rows })
-    });
-
-    const data = await resp.json();
-
-    if (data.status === 'blocked') {
-    throw new Error(data.message || 'Esta tarjeta ya compró hoy');
-    }
-
-    if (!resp.ok) {
-      throw new Error(`HTTP ${resp.status}`);
-    }
-
-    if (data.status !== 'ok') {
-      throw new Error(data.message || 'No se pudo guardar en Apps Script');
-    }
-
-    showLoading(false);
-    showSuccess(rows);
-
-  } catch (e) {
-    showLoading(false);
-    showToast('Error al guardar: ' + e.message);
-    console.error('Error submitOrder:', e);
-  }
-}
-
-function showSuccess(rows) {
-  const sub = document.getElementById('successSub');
-  sub.textContent = `${rows.length} producto(s) registrado(s) para tarjeta ${currentCardId} — ${scanTimestamp}`;
-  
-  const items = document.getElementById('successItems');
-  items.innerHTML = rows.map(r => `
-    <div class="success-item">
-      <span class="sname">${r.nombre_producto}</span>
-      <span class="sqty">×${r.cantidad}</span>
-    </div>
-  `).join('');
-  
-  showScreen('successScreen');
-}
-
-function resetAll() {
-  currentCardId = '';
-  cart = {};
-  scanTimestamp = '';
-  document.getElementById('manualId').value = '';
-  showScreen('scanScreen');
-}
-
-// FUNCIONES DE UTILIDAD
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
-function showLoading(show, text = 'Guardando en Google Sheets...') {
-  document.getElementById('loadingText').textContent = text;
-  document.getElementById('loadingOverlay').classList.toggle('show', show);
-}
-function showToast(msg, success = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast' + (success ? ' success' : '') + ' show';
-  setTimeout(() => t.className = 'toast' + (success ? ' success' : ''), 3000);
 }
 </script>
 
