@@ -115,6 +115,16 @@
       width: 18px; height: 18px; font-size: 0.7rem;
       display: flex; align-items: center; justify-content: center;
     }
+
+    /* ── VERSION ── */
+    .version {
+      position: fixed;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
@@ -209,6 +219,11 @@
     Esta tarjeta ya registró una compra el día de hoy.<br>Solo se permite una transacción por tarjeta por día.
   </div>
   <button class="btn btn-secondary" style="width:100%;max-width:360px" onclick="resetAll()">← Escanear otra tarjeta</button>
+</div>
+
+<!-- VERSION FOOTER -->
+<div class="version">
+  Versión: v1
 </div>
 
 <script>
