@@ -418,7 +418,6 @@ function initRFID() {
       if (val) {
         document.getElementById('rfidDot').className = 'rfid-dot read';
         document.getElementById('rfidStatusText').textContent = 'Tarjeta leída: ' + val;
-        setTimeout(() => enterManual(), 150); // pequeño delay visual
       }
     }
   });
@@ -728,5 +727,10 @@ function showToast(msg, success = false) {
 // Iniciar lector RFID (Keyboard Wedge)
 initRFID();
 </script>
+
+<footer style="position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 0.8rem; color: var(--muted);">
+  <p>Versión: 1.2026</p>
+</footer>
+  
 </body>
 </html>
