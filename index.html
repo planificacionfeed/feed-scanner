@@ -1,3 +1,5 @@
+<!-- ══ Listado de productos: linea 392 -- URL google sheets: linea 400 ══ -->
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -418,7 +420,6 @@ function initRFID() {
       if (val) {
         document.getElementById('rfidDot').className = 'rfid-dot read';
         document.getElementById('rfidStatusText').textContent = 'Tarjeta leída: ' + val;
-        setTimeout(() => enterManual(), 150); // pequeño delay visual
       }
     }
   });
