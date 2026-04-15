@@ -271,16 +271,7 @@
 <body>
 
 <!-- ═══════════════════════════════ SCAN SCREEN ═══════════════════════════════ -->
-
- <div id="pinScreen" style="display:none;">
-  <div class="input-row">
-    <input type="text" id="userPin" placeholder="Ingrese su PIN" autocomplete="off" />
-  </div>
-  <button class="btn btn-primary" onclick="submitPin()">Confirmar PIN</button>
-</div> 
-  
-  
-  <div id="scanScreen" class="screen active">
+<div id="scanScreen" class="screen active">
   <div class="logo">
     <h1>Feed<span>Scanner</span></h1>
     <p>Sistema de registro de productos</p>
@@ -406,67 +397,9 @@ let cart = {}; // { productId: qty }
 let scanTimestamp = '';
 
 // ═══════════════════ CONFIG ═══════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwKwH2CiRgJertcYc6EqX6gDxRHjmo0kyZeVCdi9CxSeuHrCoLOvoYI1S8pWifSC8w/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwT7oaVDJwxhG82fyb5bEnEd9qLaisNOmMASBv-eRH5U3soHrv_KcZwFWQiMPxy-4s/exec';
   
 // ═══════════════════ RFID (Keyboard Wedge) ═══════════════════
-
-
-function checkPinStatus() {
-  const pinStatus = localStorage.getItem('pinStatus'); // Obtiene el estado del PIN desde localStorage
-  if (pinStatus === 'valid') {
-    // Si el PIN es válido, pasa directamente a la pantalla principal (sin mostrar la pantalla del PIN)
-    showScanScreen();  // Muestra la pantalla principal para escanear tarjetas
-  } else {
-    // Si el PIN no está guardado o es inválido, muestra la pantalla para ingresar el PIN
-    showPinScreen();   // Muestra la pantalla del PIN
-  }
-}
-
-function submitPin() {
-  const userPin = document.getElementById('userPin').value.trim();  // Obtiene el valor del PIN ingresado por el usuario
-  
-  if (!userPin) {
-    alert("Por favor ingresa un PIN.");
-    return;
-  }
-
-  // Enviar el PIN al Apps Script para validarlo
-  fetch(SCRIPT_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      pin: userPin  // Enviar el PIN al backend para su validación
-    })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === 'valid') {
-      // Si el PIN es correcto, guarda el estado en localStorage y muestra la pantalla principal
-      localStorage.setItem('pinStatus', 'valid');
-      showScanScreen();  // Muestra la pantalla principal para escanear tarjetas
-    } else {
-      alert('PIN incorrecto. Intenta nuevamente.');
-    }
-  })
-  .catch(err => alert('Hubo un error al validar el PIN.'));
-}
-
-function showPinScreen() {
-  document.getElementById('pinScreen').style.display = 'block';  // Muestra la pantalla de PIN
-}
-
-function showScanScreen() {
-  document.getElementById('pinScreen').style.display = 'none';  // Oculta la pantalla del PIN
-  document.getElementById('scanScreen').style.display = 'block';  // Muestra la pantalla para escanear tarjetas
-}
-
-window.onload = function() {
-  checkPinStatus();  // Verifica si el PIN ya fue ingresado correctamente
-};
-
-  
 // El lector OMNIKEY 5427CK actúa como teclado: tipea el ID y presiona Enter.
 // Solo necesitamos mantener el foco en el input y escuchar el Enter.
 function initRFID() {
