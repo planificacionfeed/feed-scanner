@@ -264,12 +264,95 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── PIN SCREEN ── */
+  #pinScreen {
+    align-items: center; justify-content: center; gap: 28px;
+    padding: 40px 24px;
+    background: radial-gradient(ellipse at 50% 30%, #1a2035 0%, var(--bg) 70%);
+  }
+  .pin-card {
+    width: 100%; max-width: 320px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px 24px; text-align: center;
+  }
+  .pin-icon { font-size: 2.5rem; margin-bottom: 16px; }
+  .pin-card h2 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; }
+  .pin-card p { color: var(--muted); font-size: 0.82rem; line-height: 1.5; margin-bottom: 24px; }
+  .pin-display {
+    display: flex; justify-content: center; gap: 12px; margin-bottom: 28px;
+  }
+  .pin-dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    border: 2px solid var(--border); background: transparent;
+    transition: all .15s;
+  }
+  .pin-dot.filled { background: var(--accent); border-color: var(--accent); }
+  .pin-dot.error { background: var(--danger); border-color: var(--danger); animation: shake .3s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+  .pin-keypad {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  }
+  .pin-key {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 8px;
+    font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700;
+    cursor: pointer; transition: all .1s; color: var(--text); user-select: none;
+  }
+  .pin-key:active, .pin-key.pressed { transform: scale(.93); background: var(--accent); color: #0a0b0f; border-color: var(--accent); }
+  .pin-key.del { font-size: 1rem; }
+  .pin-attempts { font-size: 0.75rem; color: var(--danger); margin-top: 12px; min-height: 18px; }
+  .pin-locked {
+    background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.25);
+    border-radius: 10px; padding: 10px 14px; font-size: 0.8rem; color: var(--danger);
+    margin-top: 12px; display: none;
+  }
+
 </style>
 </head>
 <body>
 
+<!-- ═══════════════════════════════ PIN SCREEN ═══════════════════════════════ -->
+<div id="pinScreen" class="screen active">
+  <div class="logo">
+    <h1>Feed<span>Scanner</span></h1>
+    <p>Sistema de registro de productos</p>
+  </div>
+  <div class="pin-card">
+    <div class="pin-icon">🔒</div>
+    <h2>Ingresá el PIN de acceso</h2>
+    <p>Solo personal autorizado de <strong>Somos Feed</strong> puede usar esta app.</p>
+    <div class="pin-display" id="pinDisplay">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+      <div class="pin-dot" id="pd4"></div>
+      <div class="pin-dot" id="pd5"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key del" onclick="pinKey('clear')">⌫ borrar todo</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key del" onclick="pinKey('del')">⌫</button>
+    </div>
+    <div class="pin-attempts" id="pinAttempts"></div>
+    <div class="pin-locked" id="pinLocked">
+      Demasiados intentos fallidos. Esperá <span id="lockCountdown">60</span>s.
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════ SCAN SCREEN ═══════════════════════════════ -->
-<div id="scanScreen" class="screen active">
+<div id="scanScreen" class="screen">
   <div class="logo">
     <h1>Feed<span>Scanner</span></h1>
     <p>Sistema de registro de productos</p>
@@ -359,7 +442,7 @@
   <div style="width:88px;height:88px;border-radius:50%;background:rgba(248,113,113,.12);border:2px solid var(--danger);display:flex;align-items:center;justify-content:center;font-size:2.5rem">🚫</div>
   <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;text-align:center;color:var(--danger)">Compra no permitida</div>
   <div style="color:var(--muted);text-align:center;font-size:0.85rem;line-height:1.6;max-width:300px">
-    Esta tarjeta ya registró una compra el día de hoy.
+    Esta tarjeta ya registró una compra el día de hoy.<br>Solo se permite una transacción por tarjeta por día.
   </div>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:360px;overflow:hidden">
     <div style="padding:12px 16px;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:0.8rem;font-weight:700;color:var(--muted)">
@@ -388,14 +471,128 @@
 <script>
 // ═══════════════════ DATA ═══════════════════
 const PRODUCTS = [{"id":"01","name":"Combo 1"}, {"id":"02","name":"Combo 2"}, {"id":"03","name":"Combo 3"}]
-
+  
 // ═══════════════════ STATE ═══════════════════
 let currentCardId = '';
 let cart = {}; // { productId: qty }
 let scanTimestamp = '';
 
 // ═══════════════════ CONFIG ═══════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxj22309keiGU-Fww4PPUuzkSI2DnCgUaOzNRWOsYXR81nzp7v-p-xJlGcKkK3ylxQG/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwUPewXAIo9M9XktDq9Mgqo6WrGWll5G09-Noj_EQcxsvgr69DHHK_kLEThFoE_OorO/exec';
+
+// ═══════════════════ AUTH — PIN (validado en servidor) ═══════════════════
+// El PIN correcto NO está en este archivo. Vive en Google Apps Script.
+// Así, aunque alguien vea el código fuente, no puede saber el PIN.
+
+let pinBuffer = '';
+const PIN_LENGTH = 6;
+let pinAttempts = 0;
+const MAX_ATTEMPTS = 5;
+let pinLockUntil = 0;
+let pinAuthenticated = false;
+
+function pinKey(val) {
+  const now = Date.now();
+  if (now < pinLockUntil) return;
+
+  if (val === 'del') {
+    pinBuffer = pinBuffer.slice(0, -1);
+  } else if (val === 'clear') {
+    pinBuffer = '';
+  } else if (pinBuffer.length < PIN_LENGTH) {
+    pinBuffer += val;
+    const btn = event.currentTarget;
+    btn.classList.add('pressed');
+    setTimeout(() => btn.classList.remove('pressed'), 120);
+  }
+
+  updatePinDisplay();
+
+  if (pinBuffer.length === PIN_LENGTH) {
+    setTimeout(validatePin, 150);
+  }
+}
+
+function updatePinDisplay() {
+  for (let i = 0; i < PIN_LENGTH; i++) {
+    const dot = document.getElementById('pd' + i);
+    dot.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  }
+}
+
+async function validatePin() {
+  showLoading(true, 'Verificando PIN...');
+  try {
+    const url = `${SCRIPT_URL}?action=validatePin&pin=${encodeURIComponent(pinBuffer)}`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    showLoading(false);
+
+    if (data.valid) {
+      pinAttempts = 0;
+      pinAuthenticated = true;
+      sessionStorage.setItem('feed_pin_auth', '1');
+      pinBuffer = '';
+      updatePinDisplay();
+      document.getElementById('pinAttempts').textContent = '';
+      showScreen('scanScreen');
+      setTimeout(() => document.getElementById('manualId').focus(), 100);
+    } else {
+      pinAttempts++;
+      pinBuffer = '';
+      // Flash red dots
+      for (let i = 0; i < PIN_LENGTH; i++) {
+        document.getElementById('pd' + i).className = 'pin-dot error';
+      }
+      setTimeout(updatePinDisplay, 500);
+
+      const remaining = MAX_ATTEMPTS - pinAttempts;
+      if (remaining <= 0) {
+        // Lock for 60 seconds
+        pinLockUntil = Date.now() + 60000;
+        document.getElementById('pinLocked').style.display = 'block';
+        document.getElementById('pinAttempts').textContent = '';
+        let secs = 60;
+        const interval = setInterval(() => {
+          secs--;
+          document.getElementById('lockCountdown').textContent = secs;
+          if (secs <= 0) {
+            clearInterval(interval);
+            pinAttempts = 0;
+            pinLockUntil = 0;
+            document.getElementById('pinLocked').style.display = 'none';
+          }
+        }, 1000);
+      } else {
+        document.getElementById('pinAttempts').textContent =
+          `PIN incorrecto. ${remaining} intento${remaining !== 1 ? 's' : ''} restante${remaining !== 1 ? 's' : ''}.`;
+      }
+    }
+  } catch(e) {
+    showLoading(false);
+    pinBuffer = '';
+    updatePinDisplay();
+    showToast('Error de conexión al verificar PIN');
+  }
+}
+
+function initPinScreen() {
+  // Check if already authenticated in this session
+  if (sessionStorage.getItem('feed_pin_auth') === '1') {
+    pinAuthenticated = true;
+    showScreen('scanScreen');
+    setTimeout(() => document.getElementById('manualId').focus(), 100);
+    return;
+  }
+  showScreen('pinScreen');
+  // Also allow keyboard input for physical keyboards
+  document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('pinScreen').classList.contains('active')) return;
+    if (e.key >= '0' && e.key <= '9') pinKey(e.key);
+    else if (e.key === 'Backspace') pinKey('del');
+    else if (e.key === 'Escape') pinKey('clear');
+  });
+}
 
 // ═══════════════════ RFID (Keyboard Wedge) ═══════════════════
 // El lector OMNIKEY 5427CK actúa como teclado: tipea el ID y presiona Enter.
@@ -703,6 +900,7 @@ function resetAll() {
   document.getElementById('manualId').value = '';
   document.getElementById('rfidDot').className = 'rfid-dot';
   document.getElementById('rfidStatusText').textContent = 'Esperando tarjeta...';
+  // Siempre volvemos al escaneo (sesión PIN activa durante la jornada)
   showScreen('scanScreen');
   setTimeout(() => document.getElementById('manualId').focus(), 100);
 }
@@ -724,12 +922,14 @@ function showToast(msg, success = false) {
   setTimeout(() => t.className = 'toast' + (success ? ' success' : ''), 3000);
 }
 
+// Iniciar pantalla de PIN
+initPinScreen();
 // Iniciar lector RFID (Keyboard Wedge)
 initRFID();
 </script>
 
 <footer style="position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 0.8rem; color: var(--muted);">
-  <p>Versión: 1.2026</p>
+  <p>Versión: 01.2026</p>
 </footer>
   
 </body>
