@@ -484,6 +484,15 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxuaY5i-rHMqx3peojl3
 // El PIN correcto NO está en este archivo. Vive en Google Apps Script.
 // Así, aunque alguien vea el código fuente, no puede saber el PIN.
 
+function getLocalDate() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+  
 let pinBuffer = '';
 const PIN_LENGTH = 6;
 let pinAttempts = 0;
@@ -679,7 +688,7 @@ async function openProducts(cardId) {
   // Verificar si ya compró hoy
   showLoading(true, 'Verificando tarjeta...');
   try {
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const today = getLocalDate();
     const url = `${SCRIPT_URL}?action=check&id_tarjeta=${encodeURIComponent(cardId)}&fecha=${today}`;
     const resp = await fetch(url);
     const data = await resp.json();
